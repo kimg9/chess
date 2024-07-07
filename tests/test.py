@@ -54,11 +54,11 @@ def test_should_generate_matches():
 my_match = [
     [
         (player_three, "win"),
-        (player_four, "lose")
+        (player_two, "lose")
     ],
     [
         (player_five,"draw"),
-        (player_one,"draw")
+        (player_six,"draw")
     ],
     [
         (player_five,"win"),
@@ -66,7 +66,8 @@ my_match = [
     ]
 ]
 
-def test_should_end_round():
+def test_should_end_round_and_set_scores():
+    round_one.set_pairs(first_tournament)
     round_one.end_round(my_match)
     assert round_one.is_over
     assert player_three.score == 6

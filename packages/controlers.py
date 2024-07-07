@@ -1,11 +1,12 @@
-import json
+from .models import *
+from .views import *
 
 """
 Steps : 
 
 - Initiate a new tournament (user input)
 - Initiate new players (user input)
-- Initiate rounds ? (view)
+- Initiate rounds (view)
 
 (- generate_matches(tournament) on first round of tournament
 - ask for results (user input)
@@ -15,7 +16,21 @@ Steps :
 
 """
 
-data = 0
+class MenuManager():
+    MainMenus()
+    pass
 
-with open('data.json', 'w') as f:
-    json.dump(data, f)
+class TournamentManager():
+    pass
+
+class PlayerManager():
+    pass
+
+
+class Application():
+    MenuManager()
+    TournamentManager()
+    PlayerManager()
+
+    def main():
+        pass

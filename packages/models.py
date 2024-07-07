@@ -1,6 +1,7 @@
 from datetime import datetime
 import itertools
 import random
+import json
 # import uuid
 
 
@@ -12,7 +13,6 @@ class Player():
         self.surname = surname 
         self.name = name
         self.birthday = birthday
-        self.player_id = 4
         self.player_id = next(Player.player_id)
         self.chess_club_id = chess_club_id
         # self.player_id = uuid.uuid4()
@@ -22,6 +22,10 @@ class Player():
             self.score += 1
         elif status == "draw":
             self.score += 0.5
+
+    def save(self):
+        with open('player.json', 'a') as f:
+            json.dump(self, f)
  
             
 class Tournament():
@@ -57,6 +61,10 @@ class Tournament():
                     self.current_round = self.list_of_rounds[index+1]
                     break
 
+    def save(self):
+        with open('tournament.json', 'a') as f:
+            json.dump(self, f)
+
 
 class Round():
     round_id = itertools.count()
@@ -91,9 +99,6 @@ class Round():
         if (len(tournament.list_of_players)%2) != 0:
             tournament.uneven_number_of_players()
         
-        for pair in self.list_of_matches:
-            print(len(pair.pair_of_player))
-        
     #     if matches_left:
     #         self.matches_left(matches_left)
     
@@ -125,6 +130,10 @@ class Round():
             else:
                 pass
 
+    def save(self):
+        with open('round.json', 'a') as f:
+            json.dump(self, f)
+
 
 class Match():
     match_id = itertools.count()
@@ -132,3 +141,7 @@ class Match():
 
     def __init__(self):
         self.match_id = next(Match.match_id)
+
+    def save(self):
+        with open('match.json', 'a') as f:
+            json.dump(self, f)
