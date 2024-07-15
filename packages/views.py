@@ -3,14 +3,23 @@ import tabulate
 import inquirer
 import re
 
+
 def chess_club_id_validation(answers, current):
-    if not re.match(r"[A-Za-z][A-Za-z]\d\d\d\d\d", current):
-        raise inquirer.errors.ValidationError("", reason="Chess club ID must be two characters followed by 5 digits (example: AB12345).")
+    if not re.match(r"[A-Z]{2}\d{5}", current):
+        reason_string = "Chess club ID must be two characters followed by 5 digits (example: AB12345)."
+        raise inquirer.errors.ValidationError("", reason=reason_string)
     return True
 
-def birthday_validation(answers, current):
-    if not re.match(r"\d\d/\d\d/\d\d\d\d", current):
-        raise inquirer.errors.ValidationError("", reason="Birthday must be formatted as DD/MM/YYYY (example: 19/10/1995)")
+
+def date_validation(answers, current):
+    if not re.match(r"\d\d/\d\d/\d\d\d\d$", current):
+        raise inquirer.errors.ValidationError("", reason="Date must be formatted as DD/MM/YYYY (example: 19/10/1995)")
+    return True
+
+
+def number_validation(answers, current):
+    if not re.match(r"\d*$", current):
+        raise inquirer.errors.ValidationError("", reason="Must be a number.")
     return True
 
 
@@ -36,7 +45,7 @@ class PlayerView():
                 'select_options_player',
                 message='Please chose one of the following options',
                 choices=[
-                    'Create new player', 
+                    'Create new player',
                     'List all players in alphabetical order',
                     'Return',
                 ]
@@ -58,7 +67,7 @@ class PlayerView():
             inquirer.Text(
                 'player_birthday',
                 message='What is their birthday? (format: DD/MM/YY)',
-                validate=birthday_validation,
+                validate=date_validation,
             ),
             inquirer.Text(
                 'player_chess_club_id',
@@ -72,7 +81,7 @@ class PlayerView():
     def successful_create_player(self):
         print("You successfully created a new player!")
         print("Returning to player menu")
-        
+
     def list_players_alphabetically(rows, header):
         print(tabulate.tabulate(rows, header))
 
@@ -84,9 +93,9 @@ class TournamentView():
                 'select_options_player',
                 message='Please chose one of the following options',
                 choices=[
-                    'Create new tournament', 
+                    'Create new tournament',
                     'List all tournaments',
-                    'Search for name and dates of a tournament', #TODO
+                    'Search for name and dates of a tournament',
                     'List all players alphabetically from a tournament',
                     'List all rounds and matchs of a tournament'
                     'Return',
@@ -95,7 +104,7 @@ class TournamentView():
         ]
         answer = inquirer.prompt(questions)
         return answer
-    
+
     def create_tournament():
         print("Please complete the following information to create your tournament.")
         questions = [
@@ -110,15 +119,18 @@ class TournamentView():
             inquirer.Text(
                 'tournament_start',
                 message='Start date:',
+                validate=date_validation,
             ),
             inquirer.Text(
                 'tournament_end',
                 message='End date:',
+                validate=date_validation,
             ),
             inquirer.Text(
                 'tournament_number_of_rounds',
                 message='Number of rounds:',
                 default=4,
+                validate=number_validation,
             ),
             inquirer.Text(
                 'tournament_description',
@@ -127,10 +139,10 @@ class TournamentView():
         ]
         answer = inquirer.prompt(questions)
         return answer
-    
+
     def select_tournament_player():
         print("Please select the players that will participate in the tournament")
-        
+
 
 class RoundView():
     def create_rounds(number_of_rounds):
@@ -150,6 +162,6 @@ class RoundView():
                     'tournament_start',
                     message='Start date and time:',
                 )
-        ]
+            ]
             answers.append(inquirer.prompt(questions))
         return answers
