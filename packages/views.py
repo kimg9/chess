@@ -13,6 +13,7 @@ def birthday_validation(answers, current):
         raise inquirer.errors.ValidationError("", reason="Birthday must be formatted as DD/MM/YYYY (example: 19/10/1995)")
     return True
 
+
 class MainMenus():
     def select_object():
         print("Welcome in our Chess Tournament App!")
@@ -56,12 +57,12 @@ class PlayerView():
             ),
             inquirer.Text(
                 'player_birthday',
-                message='What is their birthday?',
+                message='What is their birthday? (format: DD/MM/YY)',
                 validate=birthday_validation,
             ),
             inquirer.Text(
                 'player_chess_club_id',
-                message='What is their chess club id?',
+                message='What is their chess club id? (format: AB12345)',
                 validate=chess_club_id_validation,
             )
         ]
@@ -74,6 +75,7 @@ class PlayerView():
         
     def list_players_alphabetically(rows, header):
         print(tabulate.tabulate(rows, header))
+
 
 class TournamentView():
     def select_options_tournament():
