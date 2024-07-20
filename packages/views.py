@@ -12,7 +12,7 @@ def chess_club_id_validation(answers, current):
 
 
 def date_validation(answers, current):
-    if not re.match(r"\d\d/\d\d/\d\d\d\d$", current):
+    if not re.match(r"\d{2}/\d{2}/\d{4}$", current):
         raise inquirer.errors.ValidationError("", reason="Date must be formatted as DD/MM/YYYY (example: 19/10/1995)")
     return True
 
@@ -90,14 +90,14 @@ class TournamentView():
     def select_options_tournament():
         questions = [
             inquirer.List(
-                'select_options_player',
+                'select_options_tournament',
                 message='Please chose one of the following options',
                 choices=[
                     'Create new tournament',
                     'List all tournaments',
                     'Search for name and dates of a tournament',
                     'List all players alphabetically from a tournament',
-                    'List all rounds and matchs of a tournament'
+                    'List all rounds and matchs of a tournament',
                     'Return',
                 ]
             )
@@ -140,15 +140,33 @@ class TournamentView():
         answer = inquirer.prompt(questions)
         return answer
 
-    def select_tournament_player():
-        print("Please select the players that will participate in the tournament")
+    def select_tournament_player(players):
+        questions = [
+            inquirer.Checkbox(
+                'select_player_for_tournament',
+                message='Please select the players that will participate in this tournament. (Right arrow to select)',
+                choices=[
+                    "Player %s" %
+                    player['player_id'] + " - " +
+                    player["name"] + " " +
+                    player["surname"]
+                    for player in players
+                ],
+            )
+        ]
+        answer = inquirer.prompt(questions)
+        return answer
+
+    def successful_create_tournament():
+        print("You successfully created a new tournament!")
+        print("Returning to tournament menu")
 
 
 class RoundView():
     def create_rounds(number_of_rounds):
         answers = []
-        for _ in range(number_of_rounds):
-            print(f"Please complete the following information for round number {number_of_rounds + 1}.")
+        for number in range(number_of_rounds):
+            print(f"Please complete the following information for round number {number + 1}.")
             questions = [
                 inquirer.Text(
                     'round_name',
@@ -165,3 +183,6 @@ class RoundView():
             ]
             answers.append(inquirer.prompt(questions))
         return answers
+
+    def no_rounds_created():
+        print("Something is wrong, there was no information for rounds. Tournament was not created. Please try again.")

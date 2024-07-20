@@ -5,14 +5,13 @@ import json
 
 
 class Player():
-    player_id = itertools.count()
     score = 0
 
     def __init__(self, surname, name, birthday, chess_club_id):
         self.surname = surname
         self.name = name
         self.birthday = birthday
-        self.player_id = next(Player.player_id)
+        self.player_id = self.set_player_id()
         self.chess_club_id = chess_club_id
 
     def set_outcome(self, status):
@@ -22,7 +21,7 @@ class Player():
             self.score += 0.5
 
     def save(self):
-        with open('data/tournaments/player.json', 'r+') as file:
+        with open('data/tournaments/player.json', 'w+') as file:
             try:
                 players = json.load(file)
             except json.decoder.JSONDecodeError:
@@ -43,6 +42,11 @@ class Player():
                 players = []
         return players
 
+    def set_player_id(self):
+        players = self.load()
+        new_id = int(players[-1]['player_id']) + 1
+        return new_id
+
 
 class Tournament():
     def __init__(
@@ -55,7 +59,7 @@ class Tournament():
                 list_of_players: list,
                 list_of_rounds: list,
                 description: str,
-                number_of_rounds=4
+                number_of_rounds: int,
             ):
         self.name = name
         self.place = place
@@ -89,15 +93,15 @@ class Tournament():
                     break
 
     def save(self):
-        with open('data/tournaments/tournament.json', 'r+') as file:
+        with open('data/tournaments/tournament.json', 'w+') as file:
             try:
                 tournaments = json.load(file)
             except json.decoder.JSONDecodeError:
                 tournaments = []
-            tournaments.append(self.__dict__)
+            tournaments.append(json.dumps(self, default=lambda o: getattr(o, '__dict__', str(o))))
             file.seek(0)
             file.truncate()
-            file.write(json.dumps(tournaments))
+            file.write(str(tournaments).replace('\'', ''))
             file.flush()
             file.close()
 
@@ -176,7 +180,7 @@ class Round():
                 pass
 
     def save(self):
-        with open('data/tournaments/round.json', 'r+') as file:
+        with open('data/tournaments/round.json', 'w+') as file:
             try:
                 rounds = json.load(file)
             except json.decoder.JSONDecodeError:
@@ -204,25 +208,3 @@ class Match():
 
     def __init__(self):
         self.match_id = next(Match.match_id)
-
-    def save(self):
-        with open('data/tournaments/match.json', 'r+') as file:
-            try:
-                matchs = json.load(file)
-            except json.decoder.JSONDecodeError:
-                matchs = []
-            matchs.append(self.__dict__)
-            file.seek(0)
-            file.truncate()
-            file.write(json.dumps(matchs))
-            file.flush()
-            file.close()
-
-    @staticmethod
-    def load():
-        with open('data/tournaments/match.json', 'r+') as file:
-            try:
-                matchs = json.load(file)
-            except json.decoder.JSONDecodeError:
-                matchs = []
-        return matchs

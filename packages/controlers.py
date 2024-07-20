@@ -64,40 +64,12 @@ class PlayerManager():
 
 
 class TournamentManager():
-    def tournament_options_menu():
+    @classmethod
+    def tournament_options_menu(self):
         answer = views.TournamentView.select_options_tournament()
-        match answer:
+        match answer['select_options_tournament']:
             case 'Create new tournament':
-                tournament_info = views.TournamentView.create_tournament()
-                players = views.TournamentView.select_tournament_player()
-                tournament = models.Tournament(
-                    name=tournament_info[0],
-                    place=tournament_info[1],
-                    start=tournament_info[2],
-                    end=tournament_info[3],
-                    number_of_rounds=tournament_info[4],
-                    current_round=None,
-                    list_of_rounds=[],
-                    list_of_players=players,
-                    description=tournament_info[5]
-                )
-                rounds = views.RoundView.create_rounds()
-                for index, value in enumerate(rounds):
-                    round = models.Round(
-                        name=value[0],
-                        place=value[1],
-                        start_datetime=value[2]
-                    )
-
-                    # Créer match
-
-                    if index == 0:
-                        tournament.current_round = round
-
-                    tournament.list_of_rounds.append(round)
-
-                tournament.save()
-
+                self.create_tournament()
             case 'List all tournaments':
                 pass
             case 'Search for name and dates of a tournament':
@@ -107,7 +79,60 @@ class TournamentManager():
             case 'List all rounds and matchs of a tournament':
                 pass
             case 'Return':
-                MenuManager.select_object_menu()
+                MenuManager().select_object_menu()
+
+    @classmethod
+    def create_tournament(self):
+        # TOURNAMENT
+        tournament_info = views.TournamentView.create_tournament()
+        tournament = models.Tournament(
+            name=tournament_info['tournament_name'],
+            place=tournament_info['tournament_place'],
+            start=tournament_info['tournament_start'],
+            end=tournament_info['tournament_end'],
+            number_of_rounds=int(tournament_info['tournament_number_of_rounds']),
+            current_round=None,
+            list_of_rounds=[],
+            list_of_players=[],
+            description=tournament_info['tournament_description']
+        )
+
+        # PLAYERS
+        players = models.Player.load()
+        tournament_players = views.TournamentView.select_tournament_player(players)
+        for tournament_player in tournament_players['select_player_for_tournament']:
+            for player in players:
+                if int(tournament_player.split()[1]) == player['player_id']:
+                    created_player = models.Player(
+                        surname=player['surname'],
+                        name=player['name'],
+                        birthday=player['birthday'],
+                        chess_club_id=player['chess_club_id']
+                    )
+                    tournament.list_of_players.append(created_player)
+
+        # ROUNDS
+        rounds = views.RoundView.create_rounds(tournament.number_of_rounds)
+        for index, value in enumerate(rounds):
+            if value:
+                round = models.Round(
+                    name=value['round_name'],
+                    place=value['tournament_place'],
+                    start_datetime=value['tournament_start']
+                )
+                if index == 0:
+                    tournament.current_round = round
+                round.set_pairs(tournament)
+                round.save()
+                tournament.list_of_rounds.append(round)
+            else:
+                views.RoundView.no_rounds_created()
+                self.tournament_options_menu()
+        tournament.save()
+
+        # SUCCESS
+        views.TournamentView.successful_create_tournament()
+        self.tournament_options_menu()
 
 
 class Application():
