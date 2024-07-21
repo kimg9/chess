@@ -71,12 +71,12 @@ class PlayerView():
             inquirer.Text(
                 'player_birthday',
                 message='What is their birthday? (format: DD/MM/YY)',
-                validate=Validations.date_validation(),
+                validate=Validations.date_validation,
             ),
             inquirer.Text(
                 'player_chess_club_id',
                 message='What is their chess club id? (format: AB12345)',
-                validate=Validations.chess_club_id_validation(),
+                validate=Validations.chess_club_id_validation,
             )
         ]
         answer = inquirer.prompt(questions)
@@ -87,7 +87,7 @@ class PlayerView():
         print("Returning to player menu")
 
     def list_players_alphabetically(rows, header):
-        print(tabulate.tabulate(rows, header))
+        print(tabulate.tabulate(rows, header) + "\n")
 
 
 class TournamentView():
@@ -98,6 +98,7 @@ class TournamentView():
                 message='Please chose one of the following options',
                 choices=[
                     'Create new tournament',
+                    'Update round scores and create new round',
                     'List all tournaments',
                     'Search for name and dates of a tournament',
                     'List all players alphabetically from a tournament',
@@ -114,31 +115,31 @@ class TournamentView():
         questions = [
             inquirer.Text(
                 'tournament_name',
-                message='Name:',
+                message='Name',
             ),
             inquirer.Text(
                 'tournament_place',
-                message='Place:',
+                message='Place',
             ),
             inquirer.Text(
                 'tournament_start',
-                message='Start date:',
-                validate=Validations.date_validation(),
+                message='Start date',
+                # validate=Validations.date_validation,
             ),
             inquirer.Text(
                 'tournament_end',
-                message='End date:',
-                validate=Validations.date_validation(),
+                message='End date',
+                # validate=Validations.date_validation,
             ),
             inquirer.Text(
                 'tournament_number_of_rounds',
-                message='Number of rounds:',
+                message='Number of rounds',
                 default=4,
-                validate=Validations.number_validation(),
+                validate=Validations.number_validation,
             ),
             inquirer.Text(
                 'tournament_description',
-                message='Description:',
+                message='Description',
             ),
         ]
         answer = inquirer.prompt(questions)
@@ -151,9 +152,9 @@ class TournamentView():
                 message='Please select the players that will participate in this tournament. (Right arrow to select)',
                 choices=[
                     "Player %s" %
-                    player['player_id'] + " - " +
-                    player["name"] + " " +
-                    player["surname"]
+                    player.player_id + " - " +
+                    player.name + " " +
+                    player.surname
                     for player in players
                 ],
             )
@@ -166,16 +167,16 @@ class TournamentView():
         print("Returning to tournament menu")
 
     def list_tournaments(rows, header):
-        print(tabulate.tabulate(rows, header))
+        print(tabulate.tabulate(rows, header) + "\n")
 
-    def select_player_tournament(tournaments):
+    def select_tournament(tournaments):
         questions = [
             inquirer.Checkbox(
-                'select_tournament_to_get_players',
+                'select_tournament',
                 message='Please select the tournament. (Right arrow to select)',
                 choices=[
                     "%s" %
-                    tournament['name']
+                    tournament["name"]
                     for tournament in tournaments
                 ],
             )
@@ -185,47 +186,74 @@ class TournamentView():
 
 
 class RoundView():
-    def create_rounds(number_of_rounds):
+    def create_rounds():
         answers = []
-        for number in range(number_of_rounds):
-            print(f"Please complete the following information for round number {number + 1}.")
-            questions = [
-                inquirer.Text(
-                    'round_name',
-                    message='Name:',
-                ),
-                inquirer.Text(
-                    'tournament_place',
-                    message='Place:',
-                ),
-                inquirer.Text(
-                    'tournament_start_date',
-                    message='Start date:',
-                    validate=Validations.date_validation(),
-                ),
-                inquirer.Text(
-                    'tournament_start_time',
-                    message='Start time:',
-                    validate=Validations.time_validation(),
-                )
-            ]
-            answers.append(inquirer.prompt(questions))
-        return answers
+        print("Please complete the following information to create a new round:")
+        questions = [
+            inquirer.Text(
+                'round_name',
+                message='Name',
+            ),
+            inquirer.Text(
+                'round_place',
+                message='Place',
+            ),
+            inquirer.Text(
+                'round_start_date',
+                message='Start date',
+                # validate=Validations.date_validation,
+            ),
+            inquirer.Text(
+                'round_start_time',
+                message='Start time',
+                # validate=Validations.time_validation,
+            )
+        ]
+        answers.append(inquirer.prompt(questions))
+        return answers[0]
 
     def no_rounds_created():
         print("Something is wrong, there was no information for rounds. Tournament was not created. Please try again.")
 
-    def select_round_tournaments(rounds):
+    def successful_create_round():
+        print("You successfully created a new round!")
+        print("Returning to tournament menu \n")
+
+    def successful_update_round():
+        print("\nYou successfully updated current round.\n")
+
+    def maximum_reached():
+        print("All rounds are over for this tournament. Returning to tournament menu.\n")
+
+    def select_round(rounds):
         questions = [
             inquirer.Checkbox(
-                'select_rounds_to_get_tournament',
-                message='Please select the round to get the corresponding tournament. (Right arrow to select)',
+                'select_rounds',
+                message='Please select the round. (Right arrow to select)',
                 choices=[
                     "%s" %
-                    round['name']
+                    round.name
                     for round in rounds
                 ],
             )
         ]
         answer = inquirer.prompt(questions)
         return answer
+
+    def result_of_round(selected_round):
+        answers = []
+        for round_match in selected_round.round_matches:
+            questions = [
+                inquirer.List(
+                    'select_rounds',
+                    message=f'Who won match number {round_match.match_id} for round number {selected_round.round_id}?\
+                        (Right arrow to select)',
+                    choices=[
+                        "Player %s" % round_match.pair_of_players[0][0],
+                        "Player %s" % round_match.pair_of_players[1][0],
+                        "It's a draw"
+                    ],
+                )
+            ]
+            answers.append((round_match.match_id, inquirer.prompt(questions)))
+        return answers
