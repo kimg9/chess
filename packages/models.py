@@ -21,7 +21,7 @@ class Player():
             self.score += 0.5
 
     def save(self):
-        with open('data/tournaments/player.json', 'w+') as file:
+        with open('data/tournaments/player.json', 'r+') as file:
             try:
                 players = json.load(file)
             except json.decoder.JSONDecodeError:
@@ -58,6 +58,7 @@ class Tournament():
                 current_round,
                 list_of_players: list,
                 list_of_rounds: list,
+                list_of_matches: list,
                 description: str,
                 number_of_rounds: int,
             ):
@@ -68,6 +69,7 @@ class Tournament():
         self.number_of_rounds = number_of_rounds
         self.current_round = current_round
         self.list_of_rounds = list_of_rounds
+        self.list_of_matches = list_of_matches
         self.list_of_players = list_of_players
         self.description = description
 
@@ -93,15 +95,15 @@ class Tournament():
                     break
 
     def save(self):
-        with open('data/tournaments/tournament.json', 'w+') as file:
+        with open('data/tournaments/tournament.json', 'r+') as file:
             try:
                 tournaments = json.load(file)
             except json.decoder.JSONDecodeError:
                 tournaments = []
-            tournaments.append(json.dumps(self, default=lambda o: getattr(o, '__dict__', str(o))))
+            tournaments.append(self)
             file.seek(0)
             file.truncate()
-            file.write(str(tournaments).replace('\'', ''))
+            file.write(json.dumps(tournaments, default=lambda o: getattr(o, '__dict__', str(o))))
             file.flush()
             file.close()
 
@@ -120,50 +122,51 @@ class Round():
     end_datetime = datetime
     is_over = False
     pairs_list = []
-    list_of_matches = []
 
-    def __init__(self, name, place, start_datetime):
+    def __init__(self, name, place, start_date, start_time):
         self.name = name
         self.place = place
-        self.start_datetime = start_datetime
+        self.start_date = start_date
+        self.start_time = start_time
         self.round_id = next(Round.round_id)
 
     def set_pairs(self, tournament: Tournament):
         tournament.ordonate_list_of_players()
         player = iter(tournament.list_of_players)
-        # matches_left = []
+        matches_left = []
         for pair in zip(player, player):
-            if pair not in self.pairs_list:
+            if pair not in tournament.list_of_matches:
                 self.pairs_list.append(pair)
                 new_match = Match()
                 new_match.pair_of_player += (
                         [pair[0].player_id, pair[0].score],
                         [pair[1].player_id, pair[1].score],
                     )
-                self.list_of_matches.append(new_match)
-            # else:
-            #     for player in pair:
-            #         matches_left.append(player)
+                tournament.list_of_matches.append(new_match)
+            else:
+                for player in pair:
+                    matches_left.append(player)
 
         if (len(tournament.list_of_players) % 2) != 0:
             tournament.uneven_number_of_players()
 
-    #     if matches_left:
-    #         self.matches_left(matches_left)
+        if matches_left:
+            self.matches_left(tournament, matches_left)
 
-    # def matches_left(self, matches_left):
-    #     while len(matches_left) >= 2:
-    #         while [matches_left[0], matches_left[1]] in self.pairs_list:
-    #             poped = matches_left.pop()
-    #             matches_left.insert(0, poped)
-    #         new_match = Match()
-    #         new_match.pair_of_player += (
-    #                 [matches_left[0].player_id, matches_left[0].score],
-    #                 [matches_left[1].player_id, matches_left[1].score],
-    #             )
-    #         self.list_of_matches.append(new_match)
-    #         matches_left.pop(0)
-    #         matches_left.pop(0)
+    def matches_left(self, tournament: Tournament, matches_left):
+        while len(matches_left) >= 2:
+            while [matches_left[0], matches_left[1]] in tournament.list_of_matches:
+                poped = matches_left.pop()
+                matches_left.insert(0, poped)
+            new_match = Match()
+            new_match.pair_of_player += (
+                    [matches_left[0].player_id, matches_left[0].score],
+                    [matches_left[1].player_id, matches_left[1].score],
+                )
+            tournament.list_of_matches.append(new_match)
+            self.pairs_list.append(zip(matches_left[0], matches_left[1]))
+            matches_left.pop(0)
+            matches_left.pop(0)
 
     def end_round(self, results):
         self.end_datetime = datetime.now()
@@ -180,7 +183,7 @@ class Round():
                 pass
 
     def save(self):
-        with open('data/tournaments/round.json', 'w+') as file:
+        with open('data/tournaments/round.json', 'r+') as file:
             try:
                 rounds = json.load(file)
             except json.decoder.JSONDecodeError:

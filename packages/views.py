@@ -4,23 +4,27 @@ import inquirer
 import re
 
 
-def chess_club_id_validation(answers, current):
-    if not re.match(r"[A-Z]{2}\d{5}", current):
-        reason_string = "Chess club ID must be two characters followed by 5 digits (example: AB12345)."
-        raise inquirer.errors.ValidationError("", reason=reason_string)
-    return True
+class Validations():
+    def chess_club_id_validation(answers, current):
+        if not re.match(r"^[A-Z]{2}\d{5}$", current):
+            reason_string = "Chess club ID must be two characters followed by 5 digits (example: AB12345)."
+            raise inquirer.errors.ValidationError("", reason=reason_string)
+        return True
 
+    def date_validation(answers, current):
+        if not re.match(r"^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[012])\/((19|20)\d\d)$", current):
+            raise inquirer.errors.ValidationError("", reason="Date must be formatted as DD/MM/YYYY (ex: 19/10/1995)")
+        return True
 
-def date_validation(answers, current):
-    if not re.match(r"\d{2}/\d{2}/\d{4}$", current):
-        raise inquirer.errors.ValidationError("", reason="Date must be formatted as DD/MM/YYYY (example: 19/10/1995)")
-    return True
+    def number_validation(answers, current):
+        if not re.match(r"^\d*$", current):
+            raise inquirer.errors.ValidationError("", reason="Must be a number.")
+        return True
 
-
-def number_validation(answers, current):
-    if not re.match(r"\d*$", current):
-        raise inquirer.errors.ValidationError("", reason="Must be a number.")
-    return True
+    def time_validation(answers, current):
+        if not re.match(r"^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", current):
+            raise inquirer.errors.ValidationError("", reason="Time must be formatted as HH:MM (ex: 12:00)")
+        return True
 
 
 class MainMenus():
@@ -67,12 +71,12 @@ class PlayerView():
             inquirer.Text(
                 'player_birthday',
                 message='What is their birthday? (format: DD/MM/YY)',
-                validate=date_validation,
+                validate=Validations.date_validation(),
             ),
             inquirer.Text(
                 'player_chess_club_id',
                 message='What is their chess club id? (format: AB12345)',
-                validate=chess_club_id_validation,
+                validate=Validations.chess_club_id_validation(),
             )
         ]
         answer = inquirer.prompt(questions)
@@ -119,18 +123,18 @@ class TournamentView():
             inquirer.Text(
                 'tournament_start',
                 message='Start date:',
-                validate=date_validation,
+                validate=Validations.date_validation(),
             ),
             inquirer.Text(
                 'tournament_end',
                 message='End date:',
-                validate=date_validation,
+                validate=Validations.date_validation(),
             ),
             inquirer.Text(
                 'tournament_number_of_rounds',
                 message='Number of rounds:',
                 default=4,
-                validate=number_validation,
+                validate=Validations.number_validation(),
             ),
             inquirer.Text(
                 'tournament_description',
@@ -161,6 +165,24 @@ class TournamentView():
         print("You successfully created a new tournament!")
         print("Returning to tournament menu")
 
+    def list_tournaments(rows, header):
+        print(tabulate.tabulate(rows, header))
+
+    def select_player_tournament(tournaments):
+        questions = [
+            inquirer.Checkbox(
+                'select_tournament_to_get_players',
+                message='Please select the tournament. (Right arrow to select)',
+                choices=[
+                    "%s" %
+                    tournament['name']
+                    for tournament in tournaments
+                ],
+            )
+        ]
+        answer = inquirer.prompt(questions)
+        return answer
+
 
 class RoundView():
     def create_rounds(number_of_rounds):
@@ -177,8 +199,14 @@ class RoundView():
                     message='Place:',
                 ),
                 inquirer.Text(
-                    'tournament_start',
-                    message='Start date and time:',
+                    'tournament_start_date',
+                    message='Start date:',
+                    validate=Validations.date_validation(),
+                ),
+                inquirer.Text(
+                    'tournament_start_time',
+                    message='Start time:',
+                    validate=Validations.time_validation(),
                 )
             ]
             answers.append(inquirer.prompt(questions))
@@ -186,3 +214,18 @@ class RoundView():
 
     def no_rounds_created():
         print("Something is wrong, there was no information for rounds. Tournament was not created. Please try again.")
+
+    def select_round_tournaments(rounds):
+        questions = [
+            inquirer.Checkbox(
+                'select_rounds_to_get_tournament',
+                message='Please select the round to get the corresponding tournament. (Right arrow to select)',
+                choices=[
+                    "%s" %
+                    round['name']
+                    for round in rounds
+                ],
+            )
+        ]
+        answer = inquirer.prompt(questions)
+        return answer

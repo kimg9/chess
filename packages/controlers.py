@@ -1,20 +1,7 @@
 from packages import models
 from packages import views
 
-"""
-Steps :
-
-- Initiate a new tournament (user input)
-- Initiate new players (user input)
-- Initiate rounds (view)
-
-(- generate_matches(tournament) on first round of tournament
-- ask for results (user input)
-- end_round with matches result list
-- set_current_round on Tournament to change rounds)
-*tournament.number_of_rounds
-
-"""
+from datetime import datetime
 
 
 class MenuManager():
@@ -41,7 +28,7 @@ class PlayerManager():
                 player_view.successful_create_player()
                 self.player_options_menu()
             case 'List all players in alphabetical order':
-                self.list_players_alphabetically()
+                self.list_players_alphabetically(models.Player.load_into_dict())
                 self.player_options_menu()
             case 'Return':
                 MenuManager().select_object_menu()
@@ -49,15 +36,18 @@ class PlayerManager():
     @classmethod
     def create_new_player(self):
         answers = views.PlayerView.create_player()
-        models.Player(
+        player = models.Player(
+            player_id=0,
             surname=answers['player_surname'],
             name=answers['player_name'],
             birthday=answers['player_birthday'],
             chess_club_id=answers['player_chess_club_id']
-        ).save()
+        )
+        player.set_player_id()
+        player.save()
 
-    def list_players_alphabetically():
-        sorted_list_of_players = sorted(models.Player.load(), key=lambda d: d['name'])
+    def list_players_alphabetically(players):
+        sorted_list_of_players = sorted(players, key=lambda d: d['name'])
         header = sorted_list_of_players[0].keys()
         rows = [v.values() for v in sorted_list_of_players]
         views.PlayerView.list_players_alphabetically(rows, header)
@@ -70,20 +60,29 @@ class TournamentManager():
         match answer['select_options_tournament']:
             case 'Create new tournament':
                 self.create_tournament()
+                views.TournamentView.successful_create_tournament()
+                self.tournament_options_menu()
             case 'List all tournaments':
-                pass
+                self.list_all_tournaments()
+                self.tournament_options_menu()
             case 'Search for name and dates of a tournament':
-                pass
+                self.get_tournaments_by_round()
+                self.tournament_options_menu()
             case 'List all players alphabetically from a tournament':
-                pass
+                self.list_players_of_tournaments()
+                self.tournament_options_menu()
             case 'List all rounds and matchs of a tournament':
-                pass
+                self.list_rounds_matchs_tournament()
+                self.tournament_options_menu()
+            case 'Update round scores and create new round':
+                self.update_current_round_and_create_new()
+                views.RoundView.successful_create_round()
+                self.tournament_options_menu()
             case 'Return':
                 MenuManager().select_object_menu()
 
     @classmethod
     def create_tournament(self):
-        # TOURNAMENT
         tournament_info = views.TournamentView.create_tournament()
         tournament = models.Tournament(
             name=tournament_info['tournament_name'],
@@ -93,46 +92,144 @@ class TournamentManager():
             number_of_rounds=int(tournament_info['tournament_number_of_rounds']),
             current_round=None,
             list_of_rounds=[],
+            list_of_matches=[],
             list_of_players=[],
             description=tournament_info['tournament_description']
         )
+        self.create_new_round(tournament)
+        self.create_new_list_of_players(tournament)
 
-        # PLAYERS
-        players = models.Player.load()
+    def create_new_list_of_players(tournament):
+        players = models.Player.load_into_obj()
         tournament_players = views.TournamentView.select_tournament_player(players)
         for tournament_player in tournament_players['select_player_for_tournament']:
             for player in players:
-                if int(tournament_player.split()[1]) == player['player_id']:
-                    created_player = models.Player(
-                        surname=player['surname'],
-                        name=player['name'],
-                        birthday=player['birthday'],
-                        chess_club_id=player['chess_club_id']
-                    )
-                    tournament.list_of_players.append(created_player)
+                if int(tournament_player.split()[1]) == player.player_id:
+                    tournament.list_of_players.append(player)
 
-        # ROUNDS
-        rounds = views.RoundView.create_rounds(tournament.number_of_rounds)
-        for index, value in enumerate(rounds):
-            if value:
-                round = models.Round(
-                    name=value['round_name'],
-                    place=value['tournament_place'],
-                    start_datetime=value['tournament_start']
-                )
-                if index == 0:
-                    tournament.current_round = round
-                round.set_pairs(tournament)
-                round.save()
-                tournament.list_of_rounds.append(round)
-            else:
-                views.RoundView.no_rounds_created()
-                self.tournament_options_menu()
-        tournament.save()
+    def create_new_round(tournament: models.Tournament):
+        if len(tournament.list_of_rounds) != tournament.number_of_rounds:
+            rounds = views.RoundView.create_rounds()
+            round = models.Round(
+                name=rounds['round_name'],
+                place=rounds['round_place'],
+            )
+            tournament.current_round = round
+            round.set_pairs(tournament)
+            round.save()
+            tournament.list_of_rounds.append(round)
+            tournament.update()
+        else:
+            views.RoundView.maximum_reached()
 
-        # SUCCESS
-        views.TournamentView.successful_create_tournament()
-        self.tournament_options_menu()
+    def list_all_tournaments():
+        list_of_tournaments = models.Tournament.load_into_dict()
+        for tournament in list_of_tournaments:
+            tournament["list_of_rounds"] = [value["name"] for value in tournament["list_of_rounds"]]
+            tournament["list_of_players"] = [
+                value["surname"] + " " + value["name"]
+                for value in tournament["list_of_players"]
+            ]
+            tournament["current_round"] = tournament["current_round"]["name"]
+            tournament.pop("list_of_matches")
+        header = list_of_tournaments[0].keys()
+        rows = [v.values() for v in list_of_tournaments]
+        views.TournamentView.list_tournaments(rows, header)
+
+    def list_players_of_tournaments():
+        tournaments = models.Tournament.load_into_dict()
+        answer = views.TournamentView.select_tournament(tournaments)
+        for tournament in tournaments:
+            if tournament["name"] == answer["select_tournament"][0]:
+                PlayerManager.list_players_alphabetically(tournament['list_of_players'])
+                break
+
+    def list_rounds_matchs_tournament():
+        tournaments = models.Tournament.load_into_dict()
+        answer = views.TournamentView.select_tournament(tournaments)
+        for tournament in tournaments:
+            if tournament["name"] == answer["select_tournament"][0]:
+                round_dict = []
+                for round in tournament['list_of_rounds']:
+                    round_dict.append(round)
+                header = round_dict[0].keys()
+                rows = [v.values() for v in round_dict]
+                views.TournamentView.list_tournaments(rows, header)
+
+    def get_tournaments_by_round():
+        rounds = models.Round.load()
+        answer = views.RoundView.select_round(rounds)
+        tournaments = models.Tournament.load_into_dict()
+        for tournament in tournaments:
+            for round in tournament["list_of_rounds"]:
+                if answer["select_rounds"][0] == round["name"]:
+                    tournament["list_of_rounds"] = [value["name"] for value in tournament["list_of_rounds"]]
+                    tournament["list_of_players"] = [
+                        value["surname"] + " " + value["name"]
+                        for value in tournament["list_of_players"]
+                    ]
+                    tournament["current_round"] = tournament["current_round"]["name"]
+                    tournament.pop("list_of_matches")
+                    rows = []
+                    rows.append(tournament.values())
+                    header = tournaments[0].keys()
+                    views.TournamentView.list_tournaments(rows, header)
+                    break
+            break
+
+    @classmethod
+    def update_current_round_and_create_new(self):
+        tournament_answer = views.TournamentView.select_tournament(models.Tournament.load_into_dict())
+
+        selected_tournament = None
+        selected_round = None
+        tournaments = models.Tournament.load_into_obj()
+        rounds = models.Round.load()
+        for tournament in tournaments:
+            if tournament.name == tournament_answer["select_tournament"][0]:
+                selected_tournament = tournament
+                for round in rounds:
+                    if round.round_id == tournament.current_round.round_id:
+                        selected_round = round
+                        break
+            break
+
+        if len(selected_tournament.list_of_rounds) != selected_tournament.number_of_rounds:
+            answers = views.RoundView.result_of_round(selected_round)
+
+            players = models.Player.load_into_obj()
+            for answer in answers:
+                for round_match in selected_round.round_matches:
+                    if answer[0] == round_match.match_id:
+                        if answer[1]['select_rounds'] == "It's a draw":
+                            round_match.pair_of_players[0][1] += 0.5
+                            round_match.pair_of_players[1][1] += 0.5
+                            for player in players:
+                                if player.player_id == round_match.pair_of_players[0][0]:
+                                    player.score += 1
+                                    player.update()
+                                elif player.player_id == round_match.pair_of_players[1][0]:
+                                    player.score += 1
+                                    player.update()
+                        elif int(answer[1]['select_rounds'].split()[1]) == round_match.pair_of_players[0][0]:
+                            round_match.pair_of_players[0][1] += 1
+                            for player in players:
+                                if player.player_id == round_match.pair_of_players[0][0]:
+                                    player.score += 2
+                                    player.update()
+                        elif int(answer[1]['select_rounds'].split()[1]) == round_match.pair_of_players[1][0]:
+                            round_match.pair_of_players[1][1] += 1
+                            for player in players:
+                                if player.player_id == round_match.pair_of_players[1][0]:
+                                    player.score += 2
+                                    player.update()
+            selected_round.is_over = True
+            selected_round.end_datetime = datetime.now()
+            selected_round.update()
+            views.RoundView.successful_update_round()
+            self.create_new_round(selected_tournament)
+        else:
+            views.RoundView.maximum_reached()
 
 
 class Application():
