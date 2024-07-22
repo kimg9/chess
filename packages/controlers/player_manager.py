@@ -4,8 +4,15 @@ import packages.models.player as player_model
 
 
 class PlayerManager():
+    """
+    A class to represent the options contained in the "Player" menu
+    """
     @classmethod
     def player_options_menu(self):
+        """
+        Redirects the user to the correct method depending on the selected option.
+        There are 3 options the user can chose from.
+        """
         answer = player_view.PlayerView.select_options_player()
         match answer['select_options_player']:
             case 'Create new player':
@@ -21,6 +28,11 @@ class PlayerManager():
 
     @classmethod
     def create_new_player(self):
+        """
+        Redirects to a view where the user fills a form
+        then uses the information filled to create a new instance of a Player object
+        initialized a new ID for the player then saves it to the DB.
+        """
         answers = player_view.PlayerView.create_player()
         player = player_model.Player(
             player_id=0,
@@ -33,6 +45,16 @@ class PlayerManager():
         player.save()
 
     def list_players_alphabetically(players):
+        """
+        Uses a list of Player objects loaded as dicts and sorts
+        them alphabetically by surname. It then created the header with the keys
+        of the dict and the rows with its value and sends it to a view to create
+        the table that will be displayed.
+
+        :param players: loaded players from DB
+        :type players: list of Player dict
+
+        """
         sorted_list_of_players = sorted(players, key=lambda d: d['surname'])
         header = sorted_list_of_players[0].keys()
         rows = [v.values() for v in sorted_list_of_players]

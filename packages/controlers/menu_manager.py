@@ -4,6 +4,10 @@ import packages.controlers.tournament_manager as tournament_manager_controler
 
 
 class MenuManager():
+    """
+    Main menu that appears when the app is opened.
+    The user has to chose between Player, Tournament or Exit the app.
+    """
     @staticmethod
     def select_object_menu():
         answer = main_menu_view.MainMenus.select_object()
@@ -17,5 +21,8 @@ class MenuManager():
 
 
 class Application():
+    """
+    Main function of the app
+    """
     def main():
         MenuManager.select_object_menu()

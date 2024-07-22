@@ -4,7 +4,13 @@ from packages.views.main_menu import clear
 
 
 class RoundView():
+    """
+    A view for rounds
+    """
     def create_rounds():
+        """
+        Form to fill out main information about new round.
+        """
         answers = []
         print("Please complete the following information to create a new round:")
         questions = [
@@ -22,19 +28,37 @@ class RoundView():
         return answers[0]
 
     def no_rounds_created():
+        """
+        Simple view to inform user that they have not filled correctly the round form.
+        """
         print("There was no information for round. Tournament was not created. Please try again.\n")
 
     def successful_create_round():
+        """
+        Simple view to inform user that they have successfully created a new round.
+        """
         print("You successfully created a new round!")
         print("Returning to tournament menu \n")
 
     def successful_update_round():
+        """
+        Simple view to inform user that they have successfully updated the new round.
+        """
         print("\nYou successfully updated current round.\n")
 
     def maximum_reached():
+        """
+        Simple view to inform user that all rounds are over for this tournament.
+        """
         print("All rounds are over for this tournament. Returning to tournament menu.\n")
 
     def select_round(rounds):
+        """
+        Choice view to select a rounds from the list given in param.
+
+        :attr rounds: list of rounds
+        :type rounds: List[Round]
+        """
         questions = [
             inquirer.Checkbox(
                 'select_rounds',
@@ -51,6 +75,12 @@ class RoundView():
         return answer
 
     def result_of_round(selected_round):
+        """
+        Choice view to select a winner for a given round.
+
+        :attr selected_rouns: a round
+        :type selected_rouns: Round
+        """
         answers = []
         for round_match in selected_round.round_matches:
             questions = [

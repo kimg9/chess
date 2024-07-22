@@ -10,8 +10,15 @@ from datetime import datetime
 
 
 class TournamentManager():
+    """
+    A class to represent the options contained in the "Tournament" menu
+    """
     @classmethod
     def tournament_options_menu(self):
+        """
+        Redirects the user to the correct methods and views depending on the selected option.
+        There are 7 options the user can chose from.
+        """
         answer = tournament_view.TournamentView.select_options_tournament()
         match answer['select_options_tournament']:
             case 'Create new tournament':
@@ -39,6 +46,14 @@ class TournamentManager():
 
     @classmethod
     def create_tournament(self):
+        """
+        A method to create a new tournament.
+        Gives a form to the user to fill.
+        Uses the filled information to create a new instance of a Tournament.
+        Pass this instance of a tournament to two function:
+        - Function create_new_list_of_players to chose the players playing in the tournament.
+        - Function create_new_round to generate the first round of the tournament.
+        """
         tournament_info = tournament_view.TournamentView.create_tournament()
         tournament = Tournament(
             name=tournament_info['tournament_name'],
@@ -53,9 +68,18 @@ class TournamentManager():
             description=tournament_info['tournament_description']
         )
         self.create_new_list_of_players(tournament)
-        tournament = self.create_new_round(tournament)
+        self.create_new_round(tournament)
 
-    def create_new_list_of_players(tournament):
+    def create_new_list_of_players(tournament: Tournament):
+        """
+        A method to bind tournament and list of players.
+        Loads all the players from the DB.
+        Use thoses players to call a view making the user chose the relevant players.
+        Append to the tournament param list_of_players the players that were selected.
+
+        :param tournament: an instance of an object Tournament
+        :type tournament: Tournament
+        """
         players = Player.load_into_obj()
         tournament_players = tournament_view.TournamentView.select_tournament_player(players)
         for tournament_player in tournament_players['select_player_for_tournament']:
@@ -65,21 +89,42 @@ class TournamentManager():
         tournament.update()
 
     def create_new_round(tournament: Tournament):
+        """
+        A method to create a new round to a tournament.
+        It checks if the tournament has reached all its rounds or not.
+        If yes : display a view to inform the user that the tournament has enough rounds
+        If no : gives the user a view with a form to fill.
+        Uses the response to create an instance of a Round object.
+        Generate the pairs and matches for this round.
+        Save the round in the DB.
+        Update the current_round attribute of the tournament.
+        Append the list_of_rounds attribute of the tournament
+        Update the tournament in the DB.
+
+        :param tournament: an instance of an object Tournament
+        :type tournament: Tournament
+        """
         if len(tournament.list_of_rounds) != tournament.number_of_rounds:
             rounds = round_view.RoundView.create_rounds()
             round = Round(
                 name=rounds['round_name'],
                 place=rounds['round_place'],
             )
-            tournament.current_round = round
             round.set_pairs(tournament)
             round.save()
+            tournament.current_round = round
             tournament.list_of_rounds.append(round)
             tournament.update()
         else:
             round_view.RoundView.maximum_reached()
 
     def list_all_tournaments():
+        """
+        A method to display all tournaments.
+        It loads all the Tournaments into a list of dicts.
+        For each value, clean the data so that it is easier to read once printed on screen.
+        Create header and rows with keys and values and send then to the relevant view.
+        """
         list_of_tournaments = Tournament.load_into_dict()
         for tournament in list_of_tournaments:
             tournament["list_of_rounds"] = [value["name"] for value in tournament["list_of_rounds"]]
@@ -94,6 +139,12 @@ class TournamentManager():
         tournament_view.TournamentView.list_tournaments(rows, header)
 
     def list_players_of_tournaments():
+        """
+        A method to list all players of a tournament.
+        It loads all the Tournaments into a list of dicts.
+        Propose a view to the user for them to select a tournament.
+        Get all the Players for the selected tournament and order them alphabetically.
+        """
         tournaments = Tournament.load_into_dict()
         answer = tournament_view.TournamentView.select_tournament(tournaments)
         for tournament in tournaments:
@@ -102,6 +153,13 @@ class TournamentManager():
                 break
 
     def list_rounds_matchs_tournament():
+        """
+        A method to list all rounds and matches of that round for a tournament.
+        It loads all the Tournaments into a list of dicts.
+        Propose a view to the user for them to select a tournament.
+        Get all the rounds for this tournament.
+        Create header and rows with keys and values and send then to the relevant view.
+        """
         tournaments = Tournament.load_into_dict()
         answer = tournament_view.TournamentView.select_tournament(tournaments)
         for tournament in tournaments:
@@ -114,6 +172,13 @@ class TournamentManager():
                 tournament_view.TournamentView.list_tournaments(rows, header)
 
     def get_tournaments_by_round():
+        """
+        A method to get a tournament by selecting a round.
+        It loads all the rounds in the DB, sends these rounds to a view where the user
+        can chose the desired round.
+        Then it loads all tournaments, finds the tournament where the selected round is and then returns the tournament
+        data polished and with a header and a rows to send to a view.
+        """
         rounds = Round.load()
         answer = round_view.RoundView.select_round(rounds)
         tournaments = Tournament.load_into_dict()
@@ -136,6 +201,19 @@ class TournamentManager():
 
     @classmethod
     def update_current_round_and_create_new(self):
+        """
+        A method to close a current round and set the scores of the player then create a new round.
+        It loads the tournaments from the DB and passes then to a view.
+        It then isolates the selected tournament as an object as well as the current round of this tournament
+        as a Round object.
+
+        It then checks if it is the last round or not for this specific tournament. If it is, it displays
+        a view informing the user. Otherwise, it asks the user for the result of the round.
+        It loads all the player and updates their score as well as the score for their match in the round.
+        It changes the status for the Round to "is_over", sets an end date and updates the round in the database.
+        It updates the round in the tournament object too, then updates the database.
+        Then it redirects to the method to create a new round for the tournament.
+        """
         tournament_answer = tournament_view.TournamentView.select_tournament(Tournament.load_into_dict())
 
         selected_tournament = None

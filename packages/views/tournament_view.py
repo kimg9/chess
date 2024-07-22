@@ -6,7 +6,13 @@ from packages.views.validations import Validations
 
 
 class TournamentView():
+    """
+    A view for rounds
+    """
     def select_options_tournament():
+        """
+        Menu to select one of the seven operations possible for tournaments or return to main menu.
+        """
         questions = [
             inquirer.List(
                 'select_options_tournament',
@@ -27,6 +33,9 @@ class TournamentView():
         return answer
 
     def create_tournament():
+        """
+        Form to fill out main information about new tournament.
+        """
         print("Please complete the following information to create your tournament.")
         questions = [
             inquirer.Text(
@@ -63,6 +72,12 @@ class TournamentView():
         return answer
 
     def select_tournament_player(players):
+        """
+        Choice view to select a player from the list given in param.
+
+        :attr players: list of players
+        :type players: List[Player]
+        """
         questions = [
             inquirer.Checkbox(
                 'select_player_for_tournament',
@@ -81,13 +96,30 @@ class TournamentView():
         return answer
 
     def successful_create_tournament():
+        """
+        Simple view to inform user that they have successfully created a new tournament.
+        """
         print("You successfully created a new tournament!")
         print("Returning to tournament menu\n")
 
     def list_tournaments(rows, header):
+        """
+        View to transform header + rows into a table.
+
+        :attr rows: value for the table
+        :type rows: dict_values
+        :attr heaader: header for the table
+        :type heaader: dict_keys
+        """
         print(tabulate.tabulate(rows, header) + "\n")
 
     def select_tournament(tournaments):
+        """
+        Choice view to select a tournament from the list given in param.
+
+        :attr tournaments: list of tournaments
+        :type tournaments: List[Tournament]
+        """
         questions = [
             inquirer.Checkbox(
                 'select_tournament',
