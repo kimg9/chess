@@ -47,7 +47,7 @@ class PlayerManager():
         player.save()
 
     def list_players_alphabetically(players):
-        sorted_list_of_players = sorted(players, key=lambda d: d['name'])
+        sorted_list_of_players = sorted(players, key=lambda d: d['surname'])
         header = sorted_list_of_players[0].keys()
         rows = [v.values() for v in sorted_list_of_players]
         views.PlayerView.list_players_alphabetically(rows, header)
@@ -96,8 +96,8 @@ class TournamentManager():
             list_of_players=[],
             description=tournament_info['tournament_description']
         )
-        self.create_new_round(tournament)
         self.create_new_list_of_players(tournament)
+        tournament = self.create_new_round(tournament)
 
     def create_new_list_of_players(tournament):
         players = models.Player.load_into_obj()
@@ -106,6 +106,7 @@ class TournamentManager():
             for player in players:
                 if int(tournament_player.split()[1]) == player.player_id:
                     tournament.list_of_players.append(player)
+        tournament.update()
 
     def create_new_round(tournament: models.Tournament):
         if len(tournament.list_of_rounds) != tournament.number_of_rounds:
@@ -206,26 +207,33 @@ class TournamentManager():
                             round_match.pair_of_players[1][1] += 0.5
                             for player in players:
                                 if player.player_id == round_match.pair_of_players[0][0]:
-                                    player.score += 1
+                                    player.score += 0.5
                                     player.update()
                                 elif player.player_id == round_match.pair_of_players[1][0]:
-                                    player.score += 1
+                                    player.score += 0.5
                                     player.update()
                         elif int(answer[1]['select_rounds'].split()[1]) == round_match.pair_of_players[0][0]:
                             round_match.pair_of_players[0][1] += 1
                             for player in players:
                                 if player.player_id == round_match.pair_of_players[0][0]:
-                                    player.score += 2
+                                    player.score += 1
                                     player.update()
                         elif int(answer[1]['select_rounds'].split()[1]) == round_match.pair_of_players[1][0]:
                             round_match.pair_of_players[1][1] += 1
                             for player in players:
                                 if player.player_id == round_match.pair_of_players[1][0]:
-                                    player.score += 2
+                                    player.score += 1
                                     player.update()
-            selected_round.is_over = True
+            selected_round.is_over = "Yes"
             selected_round.end_datetime = datetime.now()
             selected_round.update()
+
+            for index, round in enumerate(selected_tournament.list_of_rounds):
+                if int(round.round_id) == selected_round.round_id:
+                    selected_tournament.list_of_rounds.pop(index)
+                    selected_tournament.list_of_rounds.insert(index, selected_round)
+            selected_tournament.update()
+
             views.RoundView.successful_update_round()
             self.create_new_round(selected_tournament)
         else:

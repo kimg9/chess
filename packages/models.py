@@ -41,7 +41,6 @@ class Player():
         with open('data/tournaments/player.json', 'r+') as file:
             try:
                 players = json.load(file)
-                print(type(players[0]))
             except json.decoder.JSONDecodeError:
                 players = []
         return players
@@ -63,7 +62,10 @@ class Player():
                 file.close()
 
     def set_player_id(self):
-        players = self.load()
+        """
+        Set player ID
+        """
+        players = self.load_into_dict()
         if players:
             self.player_id = int(players[-1]['player_id']) + 1
         else:
@@ -85,7 +87,7 @@ class Round():
                  round_id=-1,
                  start_datetime=datetime.now(),
                  end_datetime=None,
-                 is_over=False,
+                 is_over="No",
                  round_matches: List[Match] = list()
                  ):
         self.name = name
@@ -228,7 +230,7 @@ class Tournament():
         self.description = description
 
     def ordonate_list_of_players(self):
-        if self.current_round.round_id == 0:
+        if len(self.list_of_rounds) == 1:
             random.shuffle(self.list_of_players)
         else:
             self.list_of_players = sorted(self.list_of_players, key=lambda player: player.score, reverse=True)
@@ -284,7 +286,7 @@ class Tournament():
                     for round in tournament.list_of_rounds:
                         temp_rounds.append(Round(**round))
                     tournament.list_of_rounds = temp_rounds
-                    tournament.current_round = Round(**tournament.current_round)
+                    tournament.current_round = Round(**tournament.current_round) if tournament.current_round else None
         return tournaments
 
     def update(self):
@@ -297,8 +299,10 @@ class Tournament():
                         updated_tournaments.append(self)
                     else:
                         updated_tournaments.append(tournament)
-                file.seek(0)
-                file.truncate()
-                file.write(json.dumps(updated_tournaments, default=lambda o: getattr(o, '__dict__', str(o))))
-                file.flush()
-                file.close()
+            else:
+                updated_tournaments.append(self)
+            file.seek(0)
+            file.truncate()
+            file.write(json.dumps(updated_tournaments, default=lambda o: getattr(o, '__dict__', str(o))))
+            file.flush()
+            file.close()

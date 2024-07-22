@@ -2,6 +2,16 @@ import inquirer.errors
 import tabulate
 import inquirer
 import re
+from os import system, name
+
+
+def clear():
+    # for windows
+    if name == 'nt':
+        _ = system('cls')
+    # for mac and linux(here, os.name is 'posix')
+    else:
+        _ = system('clear')
 
 
 class Validations():
@@ -38,6 +48,7 @@ class MainMenus():
             )
         ]
         answer = inquirer.prompt(questions)
+        clear()
         return answer
 
 
@@ -56,6 +67,7 @@ class PlayerView():
             )
         ]
         answer = inquirer.prompt(questions)
+        clear()
         return answer
 
     def create_player():
@@ -80,11 +92,12 @@ class PlayerView():
             )
         ]
         answer = inquirer.prompt(questions)
+        clear()
         return answer
 
     def successful_create_player(self):
         print("You successfully created a new player!")
-        print("Returning to player menu")
+        print("Returning to player menu \n")
 
     def list_players_alphabetically(rows, header):
         print(tabulate.tabulate(rows, header) + "\n")
@@ -108,6 +121,7 @@ class TournamentView():
             )
         ]
         answer = inquirer.prompt(questions)
+        clear()
         return answer
 
     def create_tournament():
@@ -124,12 +138,12 @@ class TournamentView():
             inquirer.Text(
                 'tournament_start',
                 message='Start date',
-                # validate=Validations.date_validation,
+                validate=Validations.date_validation,
             ),
             inquirer.Text(
                 'tournament_end',
                 message='End date',
-                # validate=Validations.date_validation,
+                validate=Validations.date_validation,
             ),
             inquirer.Text(
                 'tournament_number_of_rounds',
@@ -143,6 +157,7 @@ class TournamentView():
             ),
         ]
         answer = inquirer.prompt(questions)
+        clear()
         return answer
 
     def select_tournament_player(players):
@@ -160,11 +175,12 @@ class TournamentView():
             )
         ]
         answer = inquirer.prompt(questions)
+        clear()
         return answer
 
     def successful_create_tournament():
         print("You successfully created a new tournament!")
-        print("Returning to tournament menu")
+        print("Returning to tournament menu\n")
 
     def list_tournaments(rows, header):
         print(tabulate.tabulate(rows, header) + "\n")
@@ -182,6 +198,7 @@ class TournamentView():
             )
         ]
         answer = inquirer.prompt(questions)
+        clear()
         return answer
 
 
@@ -198,22 +215,13 @@ class RoundView():
                 'round_place',
                 message='Place',
             ),
-            inquirer.Text(
-                'round_start_date',
-                message='Start date',
-                # validate=Validations.date_validation,
-            ),
-            inquirer.Text(
-                'round_start_time',
-                message='Start time',
-                # validate=Validations.time_validation,
-            )
         ]
         answers.append(inquirer.prompt(questions))
+        clear()
         return answers[0]
 
     def no_rounds_created():
-        print("Something is wrong, there was no information for rounds. Tournament was not created. Please try again.")
+        print("There was no information for round. Tournament was not created. Please try again.\n")
 
     def successful_create_round():
         print("You successfully created a new round!")
@@ -238,6 +246,7 @@ class RoundView():
             )
         ]
         answer = inquirer.prompt(questions)
+        clear()
         return answer
 
     def result_of_round(selected_round):
@@ -256,4 +265,5 @@ class RoundView():
                 )
             ]
             answers.append((round_match.match_id, inquirer.prompt(questions)))
+        clear()
         return answers
