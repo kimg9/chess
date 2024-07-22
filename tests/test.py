@@ -85,7 +85,7 @@ my_match = [
 def test_should_end_round_and_set_scores():
     round_one.set_pairs(first_tournament)
     round_one.end_round(my_match)
-    assert round_one.is_over
+    assert round_one.is_over == "Yes"
     assert player_three.score == 6
     assert player_five.score == 0.5
     assert player_two.score == 10
