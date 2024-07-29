@@ -49,12 +49,12 @@ class TournamentView():
             inquirer.Text(
                 'tournament_start',
                 message='Start date',
-                # validate=Validations.date_validation,
+                validate=Validations.date_validation,
             ),
             inquirer.Text(
                 'tournament_end',
                 message='End date',
-                # validate=Validations.date_validation,
+                validate=Validations.date_validation,
             ),
             inquirer.Text(
                 'tournament_number_of_rounds',
