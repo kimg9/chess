@@ -105,10 +105,10 @@ class TournamentManager():
         :type tournament: Tournament
         """
         if len(tournament.list_of_rounds) != tournament.number_of_rounds:
-            rounds = round_view.RoundView.create_rounds()
+            round_info = round_view.RoundView.create_rounds()
             round = Round(
-                name=rounds['round_name'],
-                place=rounds['round_place'],
+                name=round_info['round_name'],
+                place=round_info['round_place'],
             )
             tournament.current_round = round
             round.set_pairs(tournament)

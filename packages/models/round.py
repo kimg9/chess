@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 import itertools
 import json
 
@@ -33,11 +32,11 @@ class Round():
     def __init__(self,
                  name,
                  place,
+                 round_matches=None,
                  round_id=-1,
                  start_datetime=datetime.now(),
                  end_datetime=None,
                  is_over="No",
-                 round_matches: List[Match] = list()
                  ):
         """
         Constructs all the necessary attributes for the round object.
@@ -65,7 +64,7 @@ class Round():
         self.start_datetime = start_datetime
         self.end_datetime = end_datetime
         self.is_over = is_over
-        self.round_matches = round_matches
+        self.round_matches = round_matches if round_matches is not None else []
         self.round_id = self.set_round_id() if round_id == -1 else round_id
 
     def set_pairs(self, tournament):
@@ -90,7 +89,6 @@ class Round():
                 tournament.list_of_matches.append(new_match)
                 self.round_matches.append(new_match)
             elif match in (p.pair_of_players for p in tournament.list_of_matches):
-                print("i should come here")
                 for player in pair:
                     players_left.append(player)
 
