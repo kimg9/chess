@@ -49,12 +49,12 @@ class TournamentView():
             inquirer.Text(
                 'tournament_start',
                 message='Start date',
-                validate=Validations.date_validation,
+                # validate=Validations.date_validation,
             ),
             inquirer.Text(
                 'tournament_end',
                 message='End date',
-                validate=Validations.date_validation,
+                # validate=Validations.date_validation,
             ),
             inquirer.Text(
                 'tournament_number_of_rounds',
@@ -111,7 +111,7 @@ class TournamentView():
         :attr heaader: header for the table
         :type heaader: dict_keys
         """
-        print(tabulate.tabulate(rows, header) + "\n")
+        print(tabulate.tabulate(rows, header, tablefmt="grid") + "\n")
 
     def select_tournament(tournaments):
         """

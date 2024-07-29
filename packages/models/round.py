@@ -78,6 +78,7 @@ class Round():
         tournament.ordonate_list_of_players()
         player = iter(tournament.list_of_players)
         players_left = []
+
         for pair in zip(player, player):
             match = (
                         [pair[0].player_id, 0],
@@ -88,12 +89,15 @@ class Round():
                 new_match.pair_of_players += match
                 tournament.list_of_matches.append(new_match)
                 self.round_matches.append(new_match)
-            else:
+            elif match in (p.pair_of_players for p in tournament.list_of_matches):
+                print("i should come here")
                 for player in pair:
                     players_left.append(player)
 
         if (len(tournament.list_of_players) % 2) != 0:
-            tournament.uneven_number_of_players()
+            solo_match = tournament.uneven_number_of_players()
+            self.round_matches.append(solo_match)
+            tournament.list_of_matches.append(solo_match)
 
         if players_left:
             self.players_left(tournament, players_left)
@@ -108,7 +112,7 @@ class Round():
         :type players_left: List[Player]
         """
         while len(players_left) >= 2:
-            while [players_left[0], players_left[1]] in tournament.list_of_matches:
+            while [players_left[0], players_left[1]] in (p.pair_of_players for p in tournament.list_of_matches):
                 poped = players_left.pop()
                 players_left.insert(0, poped)
             new_match = Match()

@@ -110,9 +110,9 @@ class TournamentManager():
                 name=rounds['round_name'],
                 place=rounds['round_place'],
             )
+            tournament.current_round = round
             round.set_pairs(tournament)
             round.save()
-            tournament.current_round = round
             tournament.list_of_rounds.append(round)
             tournament.update()
         else:
@@ -127,11 +127,14 @@ class TournamentManager():
         """
         list_of_tournaments = Tournament.load_into_dict()
         for tournament in list_of_tournaments:
-            tournament["list_of_rounds"] = [value["name"] for value in tournament["list_of_rounds"]]
-            tournament["list_of_players"] = [
-                value["surname"] + " " + value["name"]
-                for value in tournament["list_of_players"]
-            ]
+            round_str = ""
+            for round in tournament["list_of_rounds"]:
+                round_str += round["name"] + "\n"
+            tournament["list_of_rounds"] = round_str
+            player_str = ""
+            for player in tournament["list_of_players"]:
+                player_str += player["surname"] + " " + player["name"] + "\n"
+            tournament["list_of_players"] = player_str
             tournament["current_round"] = tournament["current_round"]["name"]
             tournament.pop("list_of_matches")
         header = list_of_tournaments[0].keys()
@@ -166,6 +169,10 @@ class TournamentManager():
             if tournament["name"] == answer["select_tournament"][0]:
                 round_dict = []
                 for round in tournament['list_of_rounds']:
+                    match_str = ""
+                    for match in round['round_matches']:
+                        match_str += str(match) + "\n"
+                    round['round_matches'] = match_str
                     round_dict.append(round)
                 header = round_dict[0].keys()
                 rows = [v.values() for v in round_dict]
@@ -185,13 +192,21 @@ class TournamentManager():
         for tournament in tournaments:
             for round in tournament["list_of_rounds"]:
                 if answer["select_rounds"][0] == round["name"]:
-                    tournament["list_of_rounds"] = [value["name"] for value in tournament["list_of_rounds"]]
-                    tournament["list_of_players"] = [
-                        value["surname"] + " " + value["name"]
-                        for value in tournament["list_of_players"]
-                    ]
+
+                    round_str = ""
+                    for round in tournament["list_of_rounds"]:
+                        round_str += round["name"] + "\n"
+                    tournament["list_of_rounds"] = round_str
+
+                    player_str = ""
+                    for player in tournament["list_of_players"]:
+                        player_str += player["surname"] + " " + player["name"] + "\n"
+                    tournament["list_of_players"] = player_str
+
                     tournament["current_round"] = tournament["current_round"]["name"]
+
                     tournament.pop("list_of_matches")
+
                     rows = []
                     rows.append(tournament.values())
                     header = tournaments[0].keys()
@@ -230,13 +245,33 @@ class TournamentManager():
             break
 
         if len(selected_tournament.list_of_rounds) != selected_tournament.number_of_rounds:
-            answers = round_view.RoundView.result_of_round(selected_round)
+            cleaned_round = selected_round
+            for index, round in enumerate(cleaned_round.round_matches):
+                if len(round.pair_of_players) == 1:
+                    cleaned_round.round_matches.pop(index)
+
+            answers = round_view.RoundView.result_of_round(cleaned_round)
 
             players = Player.load_into_obj()
             for answer in answers:
-                for round_match in selected_round.round_matches:
+                for match in selected_tournament.list_of_matches:
+                    if match.match_id == answer[0]:
+                        if answer[1]['select_rounds'] == "It's a draw":
+                            match.pair_of_players[0][1] += 0.5
+                            match.pair_of_players[1][1] += 0.5
+                        elif int(answer[1]['select_rounds'].split()[1]) == match.pair_of_players[0][0]:
+                            match.pair_of_players[0][1] += 1
+                        elif int(answer[1]['select_rounds'].split()[1]) == match.pair_of_players[1][0]:
+                            match.pair_of_players[1][1] += 1
+
+                for index, round_match in enumerate(selected_round.round_matches):
                     if answer[0] == round_match.match_id:
                         if answer[1]['select_rounds'] == "It's a draw":
+                            for player in selected_tournament.list_of_players:
+                                if round_match.pair_of_players[0][0] == player.player_id:
+                                    player.score += 0.5
+                                elif round_match.pair_of_players[1][0] == player.player_id:
+                                    player.score += 0.5
                             round_match.pair_of_players[0][1] += 0.5
                             round_match.pair_of_players[1][1] += 0.5
                             for player in players:
@@ -252,16 +287,24 @@ class TournamentManager():
                                 if player.player_id == round_match.pair_of_players[0][0]:
                                     player.score += 1
                                     player.update()
+                            for player in selected_tournament.list_of_players:
+                                if round_match.pair_of_players[0][0] == player.player_id:
+                                    player.score += 1
                         elif int(answer[1]['select_rounds'].split()[1]) == round_match.pair_of_players[1][0]:
                             round_match.pair_of_players[1][1] += 1
                             for player in players:
                                 if player.player_id == round_match.pair_of_players[1][0]:
                                     player.score += 1
                                     player.update()
+                            for player in selected_tournament.list_of_players:
+                                if round_match.pair_of_players[1][0] == player.player_id:
+                                    player.score += 1
+
             selected_round.is_over = "Yes"
             selected_round.end_datetime = datetime.now()
             selected_round.update()
 
+            selected_tournament.current_round = selected_round
             for index, round in enumerate(selected_tournament.list_of_rounds):
                 if int(round.round_id) == selected_round.round_id:
                     selected_tournament.list_of_rounds.pop(index)

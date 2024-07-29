@@ -63,10 +63,14 @@ class Tournament():
         """
         Ordonnates player according to score or randowly if it's the first round.
         """
-        if len(self.list_of_rounds) == 1:
+        if self.current_round.round_id == 0:
             random.shuffle(self.list_of_players)
         else:
             self.list_of_players = sorted(self.list_of_players, key=lambda player: player.score, reverse=True)
+            for index, player in enumerate(self.list_of_players):
+                if index + 1 != len(self.list_of_players):
+                    if player.score == self.list_of_players[index+1].score:
+                        random.shuffle(self.list_of_players[index:index+1])
 
     def uneven_number_of_players(self):
         """
@@ -76,7 +80,7 @@ class Tournament():
         new_match.pair_of_players += (
                 [self.list_of_players[-1].player_id, 0],
             )
-        self.list_of_matches.append(new_match)
+        return new_match
 
     def save(self):
         """
