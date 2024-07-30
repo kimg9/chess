@@ -244,7 +244,7 @@ class TournamentManager():
                         break
             break
 
-        if len(selected_tournament.list_of_rounds) != selected_tournament.number_of_rounds:
+        if len(selected_tournament.list_of_rounds) <= selected_tournament.number_of_rounds:
             cleaned_round = selected_round
             for index, round in enumerate(cleaned_round.round_matches):
                 if len(round.pair_of_players) == 1:
